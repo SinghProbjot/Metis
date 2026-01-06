@@ -1,0 +1,91 @@
+#ai-assistant-overlay {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  width: 300px;
+  background-color: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(10px);
+  color: white;
+  z-index: 999999;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  border: 1px solid #334155;
+  overflow: hidden;
+  transition: opacity 0.3s;
+}
+
+.ai-header {
+  background: #1e293b;
+  padding: 10px 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #334155;
+  cursor: grab;
+  font-weight: 600;
+  font-size: 14px;
+  color: #60a5fa;
+}
+
+.ai-header:active {
+  cursor: grabbing;
+}
+
+#ai-close-btn {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+#ai-close-btn:hover {
+  color: white;
+}
+
+.ai-content {
+  padding: 15px;
+  min-height: 50px;
+  max-height: 150px;
+  overflow-y: auto;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #cbd5e1;
+}
+
+.ai-suggestion {
+  background: linear-gradient(to right, #064e3b, #065f46);
+  padding: 12px;
+  margin: 0 10px 10px 10px;
+  border-radius: 8px;
+  border: 1px solid #059669;
+  display: flex;
+  gap: 10px;
+  animation: fadeIn 0.5s ease-in;
+}
+
+.ai-suggestion.hidden {
+  display: none;
+}
+
+.ai-bulb {
+  font-size: 18px;
+}
+
+#ai-suggestion-text {
+  font-size: 12px;
+  font-weight: 500;
+  color: #ecfdf5;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
