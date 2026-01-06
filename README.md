@@ -1,4 +1,15 @@
-# Mètis - AI Meeting Assistant
+# <div align="center"> <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/62/Metis_clipeus_Altemps_Inv8572.jpg/480px-Metis_clipeus_Altemps_Inv8572.jpg" alt="Mètis - Titaness of Wisdom" width="150" style="border-radius: 50%; object-fit: cover;"> <br/> <h1>Mètis</h1> <h3>AI Meeting Assistant</h3> </div>
+
+<div align="center">
+
+[![Manifest V3](https://img.shields.io/badge/Manifest-V3-4285F4?style=for-the-badge&logo=google-chrome&logoColor=white)](https://developer.chrome.com/docs/extensions/mv3/intro/)
+[![Powered by Gemini](https://img.shields.io/badge/AI-Gemini-8E75B2?style=for-the-badge&logo=google-bard&logoColor=white)](https://deepmind.google/technologies/gemini/)
+[![Privacy Focused](https://img.shields.io/badge/Privacy-Local_Processing-success?style=for-the-badge&logo=adguard&logoColor=white)](#privacy)
+[![License](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)](LICENSE)
+
+</div>
+
+<br/>
 
 Mètis is a browser extension (Chrome/Edge) that acts as a strategic advisor during video conferences. Unlike standard transcription tools, Mètis does not just transcribe the conversation but actively listens to provide real-time support.
 
