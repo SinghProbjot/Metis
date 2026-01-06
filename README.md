@@ -1,2 +1,2 @@
-# M-tis
+# Metis
 Mètis - AI Meeting Assistant
