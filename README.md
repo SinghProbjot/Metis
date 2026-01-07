@@ -1,4 +1,4 @@
-# <div align="center"> <img src="https://images-platform.99static.com/qd4QYvoDrUPJB-IKE-I3zPMKdA0=/0x0:1500x1500/500x500/top/smart/99designs-contests-attachments/92/92730/attachment_92730625" alt="Mètis - Titaness of Wisdom" width="150" style="border-radius: 50%; object-fit: cover;"> <br/> <h1>Mètis</h1> <h3>AI Meeting Assistant</h3> </div>
+# <div align="center"> <img src="assets/logo.png" alt="Mètis - Titaness of Wisdom" width="150" style="border-radius: 50%; object-fit: cover;"> <br/> <h3>AI Meeting Assistant</h3> </div>
 
 <div align="center">
 
