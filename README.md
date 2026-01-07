@@ -1,4 +1,4 @@
-# <div align="center"> <img src="assets/logo.png" alt="Mètis - Titaness of Wisdom" width="150" style="border-radius: 50%; object-fit: cover;"> <br/> <h3>AI Meeting Assistant</h3> </div>
+# <div align="center"> <img src="assets/logo_git.png" alt="Mètis - Titaness of Wisdom" width="500" style="border-radius: 50%; object-fit: cover;"> <br/> <h3>AI Meeting Assistant</h3> </div>
 
 <div align="center">
 
