@@ -35,7 +35,12 @@
   },
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
+      "matches": [
+        "https://meet.google.com/*",
+        "https://teams.microsoft.com/*",
+        "https://zoom.us/*",
+        "https://*.zoom.us/*"
+      ],
       "js": ["content.js"],
       "css": ["styles.css"]
     }

@@ -10,7 +10,40 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
+  // Controlla se c'è già una registrazione in corso
+  chrome.runtime.sendMessage({ type: "GET_STATUS" }, (response) => {
+    if (response && response.isRecording) {
+      setRecordingState(true);
+    }
+  });
+
+  function setRecordingState(isRecording) {
+    if (isRecording) {
+      startBtn.textContent = "Ferma Ascolto";
+      startBtn.style.backgroundColor = "#ef4444"; // Rosso per stop
+      apiKeyInput.disabled = true;
+      statusMsg.textContent = "Ascolto in corso...";
+      statusMsg.style.color = "#22c55e";
+    } else {
+      startBtn.textContent = "Avvia Ascolto";
+      startBtn.style.backgroundColor = ""; // Reset colore
+      apiKeyInput.disabled = false;
+      statusMsg.textContent = "";
+    }
+  }
+
   startBtn.addEventListener("click", async () => {
+    // Se stiamo registrando, ferma tutto
+    if (startBtn.textContent.includes("Ferma")) {
+      chrome.runtime.sendMessage({ type: "STOP_CAPTURE" }, () => {
+        setRecordingState(false);
+        statusMsg.textContent = "Ascolto terminato.";
+        statusMsg.style.color = "#64748b";
+      });
+      return;
+    }
+
+    // Altrimenti avvia
     const key = apiKeyInput.value.trim();
     if (!key) {
       statusMsg.textContent = "Errore: Inserisci API Key";
@@ -40,8 +73,7 @@ document.addEventListener("DOMContentLoaded", () => {
         apiKey: key,
       },
       () => {
-        statusMsg.textContent = "Assistente attivato!";
-        statusMsg.style.color = "#22c55e";
+        setRecordingState(true);
       }
     );
   });
