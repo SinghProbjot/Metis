@@ -77,6 +77,10 @@ function createStartPrompt(apiKey) {
 }
 
 function createOverlay() {
+  // Rimuovi eventuale prompt di avvio se presente per evitare duplicati
+  const prompt = document.getElementById("metis-start-prompt");
+  if (prompt) prompt.remove();
+
   const overlay = document.createElement("div");
   overlay.id = "ai-assistant-overlay";
   overlay.innerHTML = `

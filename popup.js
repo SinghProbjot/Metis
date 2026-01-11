@@ -65,6 +65,13 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
+    // Impedisci l'avvio su pagine di sistema (chrome://, edge://, about:blank)
+    if (tab.url.startsWith("chrome://") || tab.url.startsWith("edge://") || tab.url.startsWith("about:")) {
+      statusMsg.textContent = "Non utilizzabile su pagine di sistema";
+      statusMsg.style.color = "#ef4444";
+      return;
+    }
+
     // Invia messaggio al background per iniziare
     chrome.runtime.sendMessage(
       {

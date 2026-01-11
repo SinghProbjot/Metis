@@ -1,8 +1,6 @@
-let recognition;
 let isRecording = false;
 let geminiApiKey = "";
-let transcriptBuffer = "";
-let silenceTimer = null;
+let mediaRecorder = null;
 
 chrome.runtime.onMessage.addListener(async (msg) => {
   if (msg.type === "INIT_RECORDING" && msg.target === "offscreen") {
@@ -31,95 +29,75 @@ async function startRecording(streamId, apiKey) {
     const source = audioContext.createMediaStreamSource(media);
     source.connect(audioContext.destination);
 
-    //  Configura Riconoscimento Vocale
-    if ("webkitSpeechRecognition" in self) {
-      recognition = new webkitSpeechRecognition();
-      recognition.continuous = true;
-      recognition.interimResults = true;
-      recognition.lang = "it-IT"; // Lingua Italiana
+    //  NUOVO APPROCCIO: Cattura Audio Tab -> Gemini Audio
+    //  Usiamo MediaRecorder per catturare l'audio pulito della scheda
+    mediaRecorder = new MediaRecorder(media, { mimeType: "audio/webm" });
 
-      recognition.onresult = (event) => {
-        let interim = "";
-        let final = "";
+    mediaRecorder.ondataavailable = async (event) => {
+      if (event.data.size > 0) {
+        // Converti il blob audio in base64 per Gemini
+        const base64Audio = await blobToBase64(event.data);
+        processAudioWithGemini(base64Audio);
+      }
+    };
 
-        for (let i = event.resultIndex; i < event.results.length; ++i) {
-          if (event.results[i].isFinal) {
-            final += event.results[i][0].transcript;
-          } else {
-            interim += event.results[i][0].transcript;
-          }
-        }
+    // Invia un chunk di audio ogni 4 secondi
+    mediaRecorder.start(4000);
+    isRecording = true;
+    console.log("Registrazione Tab Audio avviata (Gemini Audio)");
 
-        // Invia trascrizione parziale alla UI
-        if (final || interim) {
-          chrome.runtime.sendMessage({
-            type: "TRANSCRIPT_UPDATE",
-            text: final ? final : interim,
-            isFinal: !!final,
-          });
-        }
-
-        // Se abbiamo una frase completa, accumulala e prova a chiedere all'AI
-        if (final) {
-          transcriptBuffer += " " + final;
-          handleAIAnalysis(transcriptBuffer);
-        }
-      };
-
-      recognition.onerror = (e) => console.error("Speech error:", e);
-      recognition.onend = () => {
-        // Riavvia se si ferma inaspettatamente mentre stiamo registrando
-        if (isRecording) recognition.start();
-      };
-
-      recognition.start();
-      isRecording = true;
-      console.log("Registrazione avviata");
-    } else {
-      console.error(
-        "Speech Recognition API non supportata in questo browser context."
-      );
-    }
   } catch (err) {
     console.error("Errore cattura audio:", err);
   }
 }
 
-// Logica di Debounce per chiamare l'AI
-function handleAIAnalysis(text) {
-  if (silenceTimer) clearTimeout(silenceTimer);
-
-  // Aspetta 2.5 secondi di pausa prima di inviare a Gemini
-  silenceTimer = setTimeout(() => {
-    if (text.length > 20) {
-      // Minimo caratteri per contesto
-      callGeminiAPI(text);
-      transcriptBuffer = ""; // Pulisci buffer parziale
-    }
-  }, 2500);
+// Helper per convertire Blob in Base64
+function blobToBase64(blob) {
+  return new Promise((resolve, _) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result.split(",")[1]);
+    reader.readAsDataURL(blob);
+  });
 }
 
-async function callGeminiAPI(textContext) {
+async function processAudioWithGemini(base64Audio) {
   if (!geminiApiKey) return;
 
   const systemPrompt = `
-    Sei un assistente per videoconferenze. Analizza il seguente testo parlato (trascrizione riunione).
-    Se rilevi una domanda tecnica, fornisci la risposta.
-    Se rilevi un punto critico, riassumilo.
-    Se è solo conversazione generica, rispondi con "NO_ACTION".
-    Rispondi in JSON: { "type": "info" | "alert", "content": "..." }
-    Sii brevissimo (max 150 caratteri).
+    Sei Mètis, un assistente per meeting.
+    1. TRASCRIVI fedelmente l'audio fornito in italiano.
+    2. ANALIZZA il contenuto: se c'è una domanda tecnica o un punto chiave, estrai un suggerimento breve.
+    
+    Rispondi ESCLUSIVAMENTE in questo formato JSON:
+    {
+      "transcript": "testo trascritto...",
+      "suggestion": { 
+        "hasSuggestion": true/false, 
+        "content": "suggerimento o riassunto (max 150 chars)" 
+      }
+    }
   `;
 
   try {
+    // Usiamo Gemini 1.5 Flash che è ottimizzato per l'audio multimodale
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${geminiApiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           contents: [
-            { parts: [{ text: `TESTO: "${textContext}"\n\n${systemPrompt}` }] },
+            {
+              parts: [
+                { text: systemPrompt },
+                {
+                  inline_data: {
+                    mime_type: "audio/webm",
+                    data: base64Audio,
+                  },
+                },
+              ],
+            },
           ],
         }),
       }
@@ -133,16 +111,28 @@ async function callGeminiAPI(textContext) {
         .replace(/```json/g, "")
         .replace(/```/g, "")
         .trim();
-      if (!cleanJson.includes("NO_ACTION")) {
-        try {
-          const parsed = JSON.parse(cleanJson);
+
+      try {
+        const parsed = JSON.parse(cleanJson);
+
+        // 1. Invia Trascrizione alla UI
+        if (parsed.transcript) {
+          chrome.runtime.sendMessage({
+            type: "TRANSCRIPT_UPDATE",
+            text: parsed.transcript,
+            isFinal: true,
+          });
+        }
+
+        // 2. Invia Suggerimento se presente
+        if (parsed.suggestion && parsed.suggestion.hasSuggestion) {
           chrome.runtime.sendMessage({
             type: "AI_SUGGESTION",
-            data: parsed,
+            data: parsed.suggestion,
           });
-        } catch (e) {
-          console.log("Errore parsing JSON", e);
         }
+      } catch (e) {
+        console.log("Errore parsing JSON", e);
       }
     }
   } catch (error) {

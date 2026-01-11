@@ -74,35 +74,49 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     chrome.storage.local.set({ recordingTabId: tabId });
 
     (async () => {
-      // Inietta l'interfaccia UI nella pagina del meeting
-      await chrome.scripting.executeScript({
-        target: { tabId: tabId },
-        files: ["content.js"],
-      });
+      try {
+        // 1. Ottieni lo stream ID SUBITO per non perdere il "User Gesture"
+        // Spostato all'inizio per evitare l'errore "Extension has not been invoked..."
+        const streamId = await chrome.tabCapture.getMediaStreamId({
+          targetTabId: tabId,
+        });
 
-      // Inietta lo stile CSS
-      await chrome.scripting.insertCSS({
-        target: { tabId: tabId },
-        files: ["styles.css"],
-      });
+        // Imposta flag per avvio manuale per aprire subito l'overlay
+        await chrome.scripting.executeScript({
+          target: { tabId: tabId },
+          func: () => {
+            window.hasRunManualStart = true;
+          },
+        });
 
-      // Prepara l'ambiente offscreen
-      await setupOffscreenDocument("offscreen.html");
+        // 2. Inietta l'interfaccia UI nella pagina del meeting
+        await chrome.scripting.executeScript({
+          target: { tabId: tabId },
+          files: ["content.js"],
+        });
 
-      // Ottieni lo stream ID della scheda corrente
-      const streamId = await chrome.tabCapture.getMediaStreamId({
-        targetTabId: tabId,
-      });
+        // Inietta lo stile CSS
+        await chrome.scripting.insertCSS({
+          target: { tabId: tabId },
+          files: ["styles.css"],
+        });
 
-      // Manda l'ID e la chiave API al documento offscreen per iniziare
-      chrome.runtime.sendMessage({
-        type: "INIT_RECORDING",
-        target: "offscreen",
-        data: streamId,
-        apiKey: message.apiKey,
-      });
+        // Prepara l'ambiente offscreen
+        await setupOffscreenDocument("offscreen.html");
 
-      sendResponse({ success: true });
+        // Manda l'ID e la chiave API al documento offscreen per iniziare
+        chrome.runtime.sendMessage({
+          type: "INIT_RECORDING",
+          target: "offscreen",
+          data: streamId,
+          apiKey: message.apiKey,
+        });
+
+        sendResponse({ success: true });
+      } catch (err) {
+        console.error("Errore avvio cattura:", err);
+        sendResponse({ success: false, error: err.message });
+      }
     })();
     return true;
   }
